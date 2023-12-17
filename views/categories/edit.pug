@@ -1,0 +1,9 @@
+doctype html
+html
+  head
+    title Tareas
+  body
+      
+    form(action=`/categories/${category.id}?_method=PUT` method="POST")
+        textarea(name="description" placeholder="Actualiza la categoría")=category.description
+        input(type="submit" value="Guardar")

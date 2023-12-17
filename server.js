@@ -14,10 +14,14 @@ const session = require('express-session');
 // se crea el objeto de la aplicacion
 const app = express();
 
+const socketio = require('socket.io');
+
 //importar las rutas
 const tasksRoutes = require('./routes/tasks_routes');
 const registrationsRoutes = require('./routes/registrations_routes');
 const sessionsRoutes = require('./routes/sessions_routes');
+const categoriesRoutes = require('./routes/categories_routes');
+
 
 // importar middlewares
 const findUserMiddleware = require('./middlewares/find_user');
@@ -40,21 +44,29 @@ app.use(authUser);
 app.use(tasksRoutes);
 app.use(registrationsRoutes);
 app.use(sessionsRoutes);
+app.use(categoriesRoutes);
 
 app.get('/', function (req, res) {
     res.render('home', { user: req.user });
 })
 
-app.listen(3000);
+let server = app.listen(3000);
+let io = socketio(server);
 
+let usersCount = 0;
 
-/*
+io.on('connection', function (socket) {
+    usersCount++;
 
-// Cerrar conexion a la base de datos
-process.on('SIGINT', function(){
-    console.log('Adios - Atte. El servidor');
-    db.close();
-    process.exit();
-});
-    Al usuar un ORM no es necesario cerrar la conexion a la base de datos
-*/
+    io.emit('count_updated', { count: usersCount });
+
+    socket.on('new_task', function (data) {
+        console.log(data);
+        io.emit('new_task', data);
+    })
+
+    socket.on('disconnect', function () {
+        usersCount--;
+        io.emit('count_updated', { count: usersCount });
+    })
+})

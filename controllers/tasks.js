@@ -22,6 +22,7 @@ module.exports = {
     },
     edit: function (req, res) {
         Task.findByPk(req.params.id).then(function (task) {
+            task.addCategories([1,5]);
             res.render('tasks/edit', { task });
         });
     },
