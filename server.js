@@ -52,20 +52,34 @@ app.get('/', function (req, res) {
 
 let server = app.listen(3000);
 let io = socketio(server);
+let sockets = {};
 
 let usersCount = 0;
 
 io.on('connection', function (socket) {
-    usersCount++;
+    let userId = socket.request._query.loggeduser;
+    if (userId) sockets[userId] = socket;
+    console.log(sockets);
 
+    usersCount++;
     io.emit('count_updated', { count: usersCount });
 
     socket.on('new_task', function (data) {
-        console.log(data);
-        io.emit('new_task', data);
+        if (data.userId) {
+            let userSocket = sockets[data.userId];
+            if (!userSocket) return;
+            userSocket.emit('new_task', data);
+        }
     })
 
     socket.on('disconnect', function () {
+        Object.keys(sockets).forEach(userId => {
+            let s = sockets[userId];
+            if (s.id == socket.id) sockets[userId] = null;
+        });
+
+        console.log(sockets);
+
         usersCount--;
         io.emit('count_updated', { count: usersCount });
     })
